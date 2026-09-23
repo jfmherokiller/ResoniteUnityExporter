@@ -1,11 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net4.7.2</TargetFramework>
+    <!-- Post-"Splittening" Resonite (FrooxEngine.dll etc.) now targets .NETCoreApp v10.0, not classic
+         .NET Framework 4.7.2 anymore. Must match or referencing its assemblies mismatches on System.Runtime. -->
+    <TargetFramework>net10.0</TargetFramework>
 	  <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
 	  <SelfContained>false</SelfContained>
 	  <PublishSingleFile>false</PublishSingleFile>
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	  <!-- Post-"Splittening" Resonite installs no longer have a Resonite_Data\Managed subfolder;
+	       the managed DLLs now sit directly in the install root. Override with -p:ResonitePath=... if needed. -->
+	  <ResonitePath Condition="'$(ResonitePath)' == ''">/mnt/steamdrive/SteamLibrary/steamapps/common/Resonite</ResonitePath>
   </PropertyGroup>
 
 	<Target Name="ClearReferenceCopyLocalPaths" AfterTargets="ResolveAssemblyReferences">
@@ -20,66 +25,73 @@
 
   <ItemGroup>
     <Reference Include="AssimpNet">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\AssimpNet.dll</HintPath>
+      <HintPath>$(ResonitePath)/AssimpNet.dll</HintPath>
+      <Aliases>Froox</Aliases>
+		<Private>true</Private>
+	</Reference>
+    <Reference Include="Renderite.Shared">
+      <!-- Post-"Splittening": BodyNode and related rig-topology types moved out of FrooxEngine into here,
+           since the renderer is now a separate process that needs to share this data. -->
+      <HintPath>$(ResonitePath)/Renderite.Shared.dll</HintPath>
       <Aliases>Froox</Aliases>
 		<Private>true</Private>
 	</Reference>
     <Reference Include="BepuPhysics">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\BepuPhysics.dll</HintPath>
+      <HintPath>$(ResonitePath)/BepuPhysics.dll</HintPath>
       <Aliases>Froox</Aliases>
 		<Private>true</Private>
 	</Reference>
     <Reference Include="Elements.Assets">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Assets.dll</HintPath>
+      <HintPath>$(ResonitePath)/Elements.Assets.dll</HintPath>
       <Aliases>Froox</Aliases>
 		<Private>true</Private>
 	</Reference>
     <Reference Include="Elements.Core">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Core.dll</HintPath>
+      <HintPath>$(ResonitePath)/Elements.Core.dll</HintPath>
       <Aliases>Froox</Aliases>
 		<Private>true</Private>
 	</Reference>
     <Reference Include="Elements.Quantity">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Quantity.dll</HintPath>
+      <HintPath>$(ResonitePath)/Elements.Quantity.dll</HintPath>
       <Aliases>Froox</Aliases>
 		<Private>true</Private>
 	</Reference>
     <Reference Include="FreeImageNET">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FreeImageNET.dll</HintPath>
+      <HintPath>$(ResonitePath)/FreeImageNET.dll</HintPath>
       <Aliases>Froox</Aliases>
       <Private>true</Private>
 	</Reference>
     <Reference Include="FrooxEngine">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.dll</HintPath>
+      <HintPath>$(ResonitePath)/FrooxEngine.dll</HintPath>
       <Aliases>Froox</Aliases>
       <Private>true</Private>
 	</Reference>
     <Reference Include="FrooxEngine.Store">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.Store.dll</HintPath>
+      <HintPath>$(ResonitePath)/FrooxEngine.Store.dll</HintPath>
       <Aliases>Froox</Aliases>
 	</Reference>
     <Reference Include="ProtoFlux.Core">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\ProtoFlux.Core.dll</HintPath>
+      <HintPath>$(ResonitePath)/ProtoFlux.Core.dll</HintPath>
 		<Aliases>Froox</Aliases>
 	</Reference>
     <Reference Include="ProtoFlux.Nodes.Core">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\ProtoFlux.Nodes.Core.dll</HintPath>
+      <HintPath>$(ResonitePath)/ProtoFlux.Nodes.Core.dll</HintPath>
 		<Aliases>Froox</Aliases>
 	</Reference>
     <Reference Include="ProtoFlux.Nodes.FrooxEngine">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\ProtoFlux.Nodes.FrooxEngine.dll</HintPath>
+      <HintPath>$(ResonitePath)/ProtoFlux.Nodes.FrooxEngine.dll</HintPath>
 		<Aliases>Froox</Aliases>
 	</Reference>
 	<Reference Include="ProtoFluxBindings">
-		<HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\ProtoFluxBindings.dll</HintPath>
+		<HintPath>$(ResonitePath)/ProtoFluxBindings.dll</HintPath>
 		<Aliases>Froox</Aliases>
 	</Reference>
     <Reference Include="SkyFrost.Base">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\SkyFrost.Base.dll</HintPath>
+      <HintPath>$(ResonitePath)/SkyFrost.Base.dll</HintPath>
       <Aliases>Froox</Aliases>
     </Reference>
     <Reference Include="SkyFrost.Base.Models">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\SkyFrost.Base.Models.dll</HintPath>
+      <HintPath>$(ResonitePath)/SkyFrost.Base.Models.dll</HintPath>
       <Aliases>Froox</Aliases>
     </Reference>
 	<Reference Include="ResoniteUnityExporterShared">

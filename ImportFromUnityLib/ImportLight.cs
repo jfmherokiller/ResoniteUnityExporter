@@ -2,6 +2,7 @@
 
 using Froox::Elements.Core;
 using Froox::FrooxEngine;
+using Froox::Renderite.Shared;
 using MemoryMappedFileIPC;
 using ResoniteUnityExporterShared;
 using System;

@@ -9,6 +9,7 @@ using Froox::Elements.Core;
 using System.IO;
 using System.Reflection;
 using Froox::FrooxEngine.CommonAvatar;
+using Froox::Renderite.Shared;
 using MemoryMappedFileIPC;
 using System.Threading.Tasks;
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Reflection;
 using System.IO;
-using System.Windows.Forms;
 using System.Threading;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -14,47 +13,57 @@ namespace ResoniteBridge
 {
     public class FrooxEngineRunner
     {
-        // Modified from https://github.com/Lexevolution/Resonite-DataTree-Converter/blob/main/Program.cs
-        public static string GetResoniteExePath(out Dictionary<string, Assembly> libraries)
+        // Originally modified from https://github.com/Lexevolution/Resonite-DataTree-Converter/blob/main/Program.cs
+        // WinForms OpenFileDialog removed (it was the only thing forcing a net8.0-windows/Windows-only build) -
+        // path is now sourced, in priority order: CLI arg -> RESONITE_EXE_PATH env var -> saved config file ->
+        // interactive console prompt. This also lets the Unity Editor package drive it headlessly (native Unity
+        // file picker via EditorUtility.OpenFilePanel, passed in as a CLI arg or the env var) instead of this
+        // process needing its own GUI at all.
+        public static string GetResoniteExePath(out Dictionary<string, Assembly> libraries, string[] args)
         {
             string settingsLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ResoniteUnityExporterStandalone", "app.config");
             bool success = false;
             libraries = new Dictionary<string, Assembly>();
             string resoniteExeLocation = "";
 
+            string preseededPath = null;
+            if (args != null && args.Length > 0 && File.Exists(args[0]))
+            {
+                preseededPath = args[0];
+            }
+            else if (File.Exists(Environment.GetEnvironmentVariable("RESONITE_EXE_PATH")))
+            {
+                preseededPath = Environment.GetEnvironmentVariable("RESONITE_EXE_PATH");
+            }
+            if (preseededPath != null)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(settingsLocation));
+                File.WriteAllText(settingsLocation, preseededPath);
+                Console.WriteLine("Using Resonite.exe location from " + (args != null && args.Length > 0 ? "command line argument" : "RESONITE_EXE_PATH") + ": " + preseededPath);
+            }
+
             while (!success)
             {
                 while (!File.Exists(settingsLocation))
                 {
                     Directory.CreateDirectory(Path.GetDirectoryName(settingsLocation));
-                    Console.WriteLine("Please find Resonite.exe");
-                    Console.WriteLine("Press Enter to continue...");
-                    Console.ReadLine();
-                    OpenFileDialog ofd = new OpenFileDialog()
+                    Console.WriteLine("Please enter the full path to Resonite.exe (or Resonite, on Linux/Mac), then press Enter:");
+                    string typedPath = Console.ReadLine();
+                    if (string.IsNullOrWhiteSpace(typedPath))
                     {
-                        Filter = "Executable Files (*.exe)|*.exe",
-                        Title = "Please select Resonite.exe",
-                        CheckFileExists = true,
-                        CheckPathExists = true,
-                        Multiselect = false
-                    };
-                    string defaultResonitePosition = @"C:\Program Files (x86)\Steam\steamapps\common\Resonite";
-                    if (Path.Exists(defaultResonitePosition))
-                    {
-                        ofd.InitialDirectory = defaultResonitePosition;
-                    }
-                    DialogResult result = ofd.ShowDialog();
-                    Console.WriteLine("");
-                    if (result == DialogResult.Cancel)
-                    {
-                        Console.WriteLine("Cancelled, restarting...");
+                        Console.WriteLine("No path entered, try again.");
                         Console.WriteLine("");
+                        continue;
                     }
-                    else
+                    typedPath = typedPath.Trim().Trim('"');
+                    if (!File.Exists(typedPath))
                     {
-                        File.WriteAllText(settingsLocation, ofd.FileName);
-                        Console.WriteLine("Wrote resonite.exe location " + ofd.FileName + " to " + settingsLocation);
+                        Console.WriteLine("That path doesn't exist: " + typedPath);
+                        Console.WriteLine("");
+                        continue;
                     }
+                    File.WriteAllText(settingsLocation, typedPath);
+                    Console.WriteLine("Wrote resonite.exe location " + typedPath + " to " + settingsLocation);
                 }
                 StreamReader sr = new StreamReader(settingsLocation);
                 resoniteExeLocation = sr.ReadToEnd();
@@ -67,7 +76,9 @@ namespace ResoniteBridge
                 Console.WriteLine(string.Format("DIRECTORY: {0}", Path.GetDirectoryName(resoniteExeLocation)));
                 libraries.Clear();
                 string resoniteFolder = Path.GetDirectoryName(resoniteExeLocation);
-                string libraryFolder = Path.Combine(resoniteFolder, "Resonite_Data", "Managed");
+                // Post-"Splittening" installs no longer have a Resonite_Data\Managed subfolder - managed
+                // (and native) DLLs now sit directly in the install root.
+                string libraryFolder = resoniteFolder;
 
                 // needed so it can fetch various config stuff
                 Directory.SetCurrentDirectory(resoniteFolder);
@@ -75,7 +86,6 @@ namespace ResoniteBridge
                 Environment.SetEnvironmentVariable("PATH",
                     Environment.GetEnvironmentVariable("PATH") + ";"
                     + libraryFolder + ";"
-                    + Path.Combine(resoniteFolder, "Resonite_Data", "Plugins", "x86_64") + ";"
                     + resoniteFolder); // for assimp.dll
 
 
@@ -134,30 +144,32 @@ namespace ResoniteBridge
         public object mainRootSlot;
 
         // heavily modified from code given to me by whatsavalue3 (who gave permission to license this as MIT)
-        public FrooxEngineRunner()
+        public FrooxEngineRunner(string[] args = null)
         {
 
             string resoniteDir = Path.GetDirectoryName(
-                FrooxEngineRunner.GetResoniteExePath(out assemblies)
+                FrooxEngineRunner.GetResoniteExePath(out assemblies, args)
             );
             string curDir = System.IO.Directory.GetCurrentDirectory();
-            string libraryPath = Path.Combine(resoniteDir, "Resonite_Data", "Managed");
+            // Post-"Splittening": no more Resonite_Data\Managed subfolder, DLLs sit in the install root.
+            string libraryPath = resoniteDir;
 
 
             assemblies.TryGetValue("FrooxEngine", out FrooxEngineAsm);
             assemblies.TryGetValue("SkyFrost.Base.Models", out SkyFrostBaseModelsAsm);
-            
+
             // Once we have froox engine, load all assemblies (this will collect more as they are loaded)
             assemblies = ReflectionUtils.LoadAssemblies(FrooxEngineAsm,
-                   Path.Combine(resoniteDir, "Resonite_Data", "Managed"),
-                   Path.Combine(resoniteDir, "Resonite_Data", "Plugins", "x64")
+                   resoniteDir,
+                   resoniteDir
                    );
 
 
             object launchOptions = CallConstructor(FrooxEngineAsm, "FrooxEngine.LaunchOptions");
 
+            // Post-"Splittening": Resonite_Data\Data is now just RuntimeData in the install root.
             SetProperty(launchOptions, "DataDirectory",
-                Path.Combine(resoniteDir, "Resonite_Data", "Data"));
+                Path.Combine(resoniteDir, "RuntimeData"));
             // Cache needs to be local in order to run this while Resonite is also running
             SetProperty(launchOptions, "CacheDirectory",
                 Path.Combine(curDir, "Cache"));
@@ -331,10 +343,9 @@ namespace ResoniteBridge
 
     internal class Program
     {
-        [STAThread]
         static void Main(string[] args)
         {
-            FrooxEngineRunner runner = new FrooxEngineRunner();
+            FrooxEngineRunner runner = new FrooxEngineRunner(args);
         }
     }
 }
