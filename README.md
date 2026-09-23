@@ -4,7 +4,7 @@ A Unity Plugin to easily export Avatars or Worlds from Unity into Resonite.
 
 It does this by:
 - Grabbing the raw mesh, material, blendshape, bone, dynamic bone, etc. data directly from unity,
-- Sends that to Resonite via inter-process communication (using a memory mapped file),
+- Sends that to Resonite or the Standalone host over a loopback HTTP bridge,
 - Decodes directly in Resonite
 
 This lets us avoid any of the limitations of converting to an intermediate file first.
@@ -74,6 +74,18 @@ When you press "Export to Resonite" your avatar/world will pop up in the world y
 See [Installing Resonite Unity Exporter Mod](#installing-resonite-unity-exporter-mod)
 
 ### Running Resonite Unity Exporter Standalone
+
+When building from source on Linux, point the build at your Resonite install and
+pass its executable path to Standalone:
+
+```sh
+dotnet build ResoniteUnityExporterStandalone/ResoniteUnityExporterStandalone.csproj -p:ResonitePath=/path/to/Resonite
+dotnet ResoniteUnityExporterStandalone/bin/Debug/net10.0/linux-x64/ResoniteUnityExporterStandalone.dll /path/to/Resonite/Resonite.exe
+```
+
+The Unity package and the host must use the same bridge version. This HTTP
+transport needs the companion ResoniteBridgeLib update; only one host (the mod
+or Standalone) can listen on port 10020 at a time.
 
 Go to the releases page
 
@@ -229,4 +241,3 @@ Venport pointed me to constraints and helped me with those
 troyBORG helped with some of the head position debugging and many other things
 
 ariel_emerald helped me with initial idea generation, some brainstorming, encouragment, and finding many various issues
-

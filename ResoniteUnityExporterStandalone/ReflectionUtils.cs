@@ -305,11 +305,11 @@ namespace ResoniteBridge
                     }
                     if (IsType(obj))
                     {
-                        method.Invoke(null, newParams);
+                        return method.Invoke(null, newParams);
                     }
                     else
                     {
-                        method.Invoke(obj, newParams);
+                        return method.Invoke(obj, newParams);
                     }
                 }
                 else

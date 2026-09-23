@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <!-- Post-"Splittening" Resonite (FrooxEngine.dll etc.) now targets .NETCoreApp v10.0, not classic
@@ -10,7 +10,7 @@
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	  <!-- Post-"Splittening" Resonite installs no longer have a Resonite_Data\Managed subfolder;
 	       the managed DLLs now sit directly in the install root. Override with -p:ResonitePath=... if needed. -->
-	  <ResonitePath Condition="'$(ResonitePath)' == ''">/mnt/steamdrive/SteamLibrary/steamapps/common/Resonite</ResonitePath>
+	  <ResonitePath Condition="'$(ResonitePath)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Resonite</ResonitePath>
   </PropertyGroup>
 
 	<Target Name="ClearReferenceCopyLocalPaths" AfterTargets="ResolveAssemblyReferences">
@@ -20,7 +20,7 @@
 	</Target>
 
 	<ItemGroup>
-	  <PackageReference Include="ResoniteBridgeLib" Version="1.2.0" />
+	  <PackageReference Include="ResoniteBridgeLib" Version="1.3.0" />
 	</ItemGroup>
 
   <ItemGroup>

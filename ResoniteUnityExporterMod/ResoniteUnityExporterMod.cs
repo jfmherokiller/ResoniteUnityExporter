@@ -64,8 +64,8 @@ namespace ResoniteBridgeMod
                         );
                     using (ResoniteBridgeServer bridgeServer = new ResoniteBridgeServer("UnityResoniteImporter", serverDirectory, (string msg) =>
                     {
-                        // enable for debugging connections
-                        //Msg("Bridge message:" + msg);
+                        if (Environment.GetEnvironmentVariable("RUE_TRACE_BRIDGE") == "1")
+                            Msg("Bridge message: " + msg);
                     }))
                     {
                         ImportFromUnityLib.ImportFromUnityLib.Register(bridgeServer, () =>
