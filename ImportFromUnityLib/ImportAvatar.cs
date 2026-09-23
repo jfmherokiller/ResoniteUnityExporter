@@ -161,7 +161,11 @@ namespace ImportFromUnityLib
                         headsetRef.GlobalPosition = avatarData.hasCustomHeadPosition
                             ? sharedParent.LocalPointToGlobal(relativeCustomHeadPosition)
                             : head.GlobalPosition;
-                        headsetRef.GlobalRotation = head.GlobalRotation;
+                        // Unity humanoid head-bone axes may face backward even when the
+                        // avatar itself faces forward. Use the avatar's shared/root frame
+                        // for the headset reference orientation; the position above still
+                        // comes from the descriptor view position (or head fallback).
+                        headsetRef.GlobalRotation = sharedParent.GlobalRotation;
                         headsetRef.GlobalScale = aviCreatorScale;
                     }
                     // line up right hand (symmetry will take care of left hand)
